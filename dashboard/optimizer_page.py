@@ -12,7 +12,7 @@ def get_gemini_client():
     if api_key:
         try:
             genai.configure(api_key=api_key)
-            return genai.GenerativeModel("gemini-1.5-flash")
+            return genai.GenerativeModel("gemini-2.5-flash")
         except Exception as e:
             st.error(f"Failed to configure Gemini Client: {e}")
     return None

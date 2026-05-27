@@ -7,8 +7,9 @@ import os
 
 def load_app_data():
     # Fallback checking to ensure the data is loaded correctly
-    cleaned_path = "data/cleaned/cleaned_dataset.csv"
-    raw_path = "data/raw/Teen_Mental_Health_Dataset.csv"
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    cleaned_path = os.path.join(base_dir, "data", "cleaned", "cleaned_dataset.csv")
+    raw_path = os.path.join(base_dir, "data", "raw", "Teen_Mental_Health_Dataset.csv")
     
     if os.path.exists(cleaned_path):
         return pd.read_csv(cleaned_path)

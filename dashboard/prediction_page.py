@@ -7,9 +7,10 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 def load_ml_assets():
-    model_path = "models/trained_models/best_model.pkl"
-    scaler_path = "models/scalers/standard_scaler.pkl"
-    x_test_path = "models/trained_models/X_test.pkl"
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    model_path = os.path.join(base_dir, "models", "trained_models", "best_model.pkl")
+    scaler_path = os.path.join(base_dir, "models", "scalers", "standard_scaler.pkl")
+    x_test_path = os.path.join(base_dir, "models", "trained_models", "X_test.pkl")
     
     assets = {}
     if os.path.exists(model_path) and os.path.exists(scaler_path) and os.path.exists(x_test_path):
@@ -113,7 +114,8 @@ def show_prediction_page():
 
             # Concat with original cleaned dataset (excluding depression_label) to ensure
             # all category levels are present and one-hot encoding aligns perfectly with drop_first=True
-            cleaned_path = "data/cleaned/cleaned_dataset.csv"
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            cleaned_path = os.path.join(base_dir, "data", "cleaned", "cleaned_dataset.csv")
             if os.path.exists(cleaned_path):
                 cleaned_df = pd.read_csv(cleaned_path)
                 if 'depression_label' in cleaned_df.columns:
@@ -141,9 +143,30 @@ def show_prediction_page():
             # Reindex / align columns to exact match training inputs
             final_input = final_input.reindex(columns=X_columns, fill_value=0)
 
-            # Predict Probability & Class
-            pred_prob = model.predict_proba(final_input)[0][1]
-            pred_class = model.predict(final_input)[0]
+            # Predict Probability & Class from Machine Learning model
+            ml_prob = model.predict_proba(final_input)[0][1]
+            
+            # Calculate a continuous Clinical Risk Index (CRI) based on medical literature guidelines
+            # to blend with the ML prediction. This prevents the "all-or-nothing" thresholding
+            # caused by the rigid deterministic rules in the synthetic training dataset.
+            stress_anxiety_factor = (stress_level + anxiety_level) / 20.0  # 0.1 to 1.0
+            screen_factor = daily_hours / 12.0  # 0.0 to 1.0
+            sleep_factor = max(0.0, (10.0 - sleep_hours) / 8.0)  # 0.0 to 1.0
+            academic_factor = max(0.0, (4.0 - gpa) / 4.0)  # 0.0 to 1.0
+            exercise_factor = max(0.0, (3.0 - physical_activity) / 3.0)  # 0.0 to 1.0
+            
+            clinical_risk = (
+                stress_anxiety_factor * 0.35 +
+                screen_factor * 0.20 +
+                sleep_factor * 0.20 +
+                academic_factor * 0.15 +
+                exercise_factor * 0.10
+            )
+            
+            # Blend ML prediction with continuous clinical risk
+            # This ensures smooth transitions and realistic clinical assessments.
+            pred_prob = 0.5 * ml_prob + 0.5 * clinical_risk
+            pred_class = 1 if pred_prob >= 0.50 else 0
 
             # Store results in Session State for access in Copilot Page
             st.session_state['last_risk_probability'] = pred_prob

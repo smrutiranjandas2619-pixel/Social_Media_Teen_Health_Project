@@ -1,6 +1,19 @@
 import streamlit as st
 import os
 
+# Load .env file globally in the process
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+env_path = os.path.join(base_dir, ".env")
+if os.path.exists(env_path):
+    with open(env_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#") and "=" in line:
+                key, val = line.split("=", 1)
+                key = key.strip()
+                val = val.strip().strip('"').strip("'")
+                os.environ[key] = val
+
 # Set page configuration with a custom premium icon and wide layout
 st.set_page_config(
     page_title="YouthMind AI - Teen Mental Health Diagnostic Copilot",

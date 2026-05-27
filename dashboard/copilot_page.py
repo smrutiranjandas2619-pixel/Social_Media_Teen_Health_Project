@@ -3,8 +3,14 @@ import os
 import google.generativeai as genai
 
 def get_gemini_client():
-    # Load from environment variables (populated globally from .env in startup)
+    # Attempt to load from environment first (backend integration)
     api_key = os.environ.get("GEMINI_API_KEY")
+    
+    # Fallback to user-entered session state key
+    if not api_key:
+        if 'gemini_api_key' in st.session_state:
+            api_key = st.session_state['gemini_api_key']
+            
     if api_key:
         try:
             genai.configure(api_key=api_key)
@@ -18,18 +24,32 @@ def show_copilot_page():
     st.markdown("<h1>💬 Gemini Youth <span class='neon-text'>Psychology Copilot</span></h1>", unsafe_allow_html=True)
     st.markdown("<p style='font-size: 16px; color: #94a3b8;'>Consult our Google Gemini clinical assistant for diagnostic write-ups and parenting/therapeutic screen strategies.</p>", unsafe_allow_html=True)
 
-    model = get_gemini_client()
-    if model is None:
+    # API Key Configuration Container
+    if not os.environ.get("GEMINI_API_KEY") and 'gemini_api_key' not in st.session_state:
         st.markdown(
             """
-            <div class='glass-card' style='border-color: rgba(239, 68, 68, 0.3);'>
-                <h4 style='color: #ef4444; margin-top: 0px;'>⚠️ Backend Generative AI API Key Not Configured</h4>
-                <p style='font-size: 13px; color: #cbd5e1;'>The Gemini Clinical Copilot requires a Google AI Studio API Key to be configured in the backend. 
-                Please contact the platform administrator to add the <code>GEMINI_API_KEY</code> inside the project <code>.env</code> file.</p>
+            <div class='glass-card' style='border-color: rgba(234, 179, 8, 0.3);'>
+                <h4 style='color: #eab308; margin-top: 0px;'>🔑 Google AI Studio API Key Required</h4>
+                <p style='font-size: 13px; color: #cbd5e1;'>To enable the generative AI counseling features, please enter your Gemini API Key below. 
+                You can get a free key from <a href="https://aistudio.google.com/" target="_blank" style="color: #00f2fe;">Google AI Studio</a>.</p>
             </div>
             """,
             unsafe_allow_html=True
         )
+        api_key_input = st.text_input("Enter Gemini API Key", type="password")
+        if api_key_input:
+            st.session_state['gemini_api_key'] = api_key_input
+            st.rerun()
+        st.info("💡 Note: You can still run the machine learning predictors and explore analytics without a Gemini key, but the AI counseling copilot requires active configuration.")
+        return
+
+    model = get_gemini_client()
+    if model is None:
+        st.error("Gemini API configured but client initialization failed. Please verify your API Key.")
+        # Provide option to reset key
+        if st.button("Reset API Key"):
+            st.session_state.pop('gemini_api_key', None)
+            st.rerun()
         return
 
     # Two column layout: Left for Diagnostic Profile Report, Right for Dynamic Chat

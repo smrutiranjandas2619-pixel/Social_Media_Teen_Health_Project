@@ -6,6 +6,9 @@ import google.generativeai as genai
 
 def get_gemini_client():
     api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        if 'gemini_api_key' in st.session_state:
+            api_key = st.session_state['gemini_api_key']
     if api_key:
         try:
             genai.configure(api_key=api_key)
@@ -18,18 +21,14 @@ def show_optimizer_page():
     st.markdown("<h1>📅 Dynamic Wellness <span class='neon-text'>Schedule Optimizer</span></h1>", unsafe_allow_html=True)
     st.markdown("<p style='font-size: 16px; color: #94a3b8;'>Formulate optimized daily teenage schedules balancing digital time, academics, fitness, and restorative sleep.</p>", unsafe_allow_html=True)
 
+    # API key check
+    if not os.environ.get("GEMINI_API_KEY") and 'gemini_api_key' not in st.session_state:
+        st.warning("⚠️ Google AI Studio API Key is required to execute Generative Schedule Optimizations. Please enter your API Key in the Gemini Psychology Copilot tab.")
+        return
+
     model = get_gemini_client()
     if model is None:
-        st.markdown(
-            """
-            <div class='glass-card' style='border-color: rgba(239, 68, 68, 0.3);'>
-                <h4 style='color: #ef4444; margin-top: 0px;'>⚠️ Backend Generative AI API Key Not Configured</h4>
-                <p style='font-size: 13px; color: #cbd5e1;'>The Daily Wellness Schedule Optimizer requires a Google AI Studio API Key configured in the backend. 
-                Please contact the platform administrator to add the <code>GEMINI_API_KEY</code> inside the project <code>.env</code> file.</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.error("Gemini API configured but client initialization failed. Please configure your key in the Gemini Psychology Copilot tab.")
         return
 
     # Diagnostic data load

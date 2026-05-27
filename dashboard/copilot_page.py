@@ -3,13 +3,8 @@ import os
 import google.generativeai as genai
 
 def get_gemini_client():
-    # Attempt to load from environment first (backend integration)
-    api_key = os.environ.get("GEMINI_API_KEY")
-    
-    # Fallback to user-entered session state key
-    if not api_key:
-        if 'gemini_api_key' in st.session_state:
-            api_key = st.session_state['gemini_api_key']
+    # Only use the user-entered session state key (manual API key model)
+    api_key = st.session_state.get('gemini_api_key')
             
     if api_key:
         try:
@@ -24,8 +19,8 @@ def show_copilot_page():
     st.markdown("<h1>💬 Gemini Youth <span class='neon-text'>Psychology Copilot</span></h1>", unsafe_allow_html=True)
     st.markdown("<p style='font-size: 16px; color: #94a3b8;'>Consult our Google Gemini clinical assistant for diagnostic write-ups and parenting/therapeutic screen strategies.</p>", unsafe_allow_html=True)
 
-    # API Key Configuration Container
-    if not os.environ.get("GEMINI_API_KEY") and 'gemini_api_key' not in st.session_state:
+    # API Key Configuration Container (Always require user input if not in session state)
+    if 'gemini_api_key' not in st.session_state:
         st.markdown(
             """
             <div class='glass-card' style='border-color: rgba(234, 179, 8, 0.3);'>

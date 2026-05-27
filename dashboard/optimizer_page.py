@@ -5,10 +5,7 @@ import os
 import google.generativeai as genai
 
 def get_gemini_client():
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        if 'gemini_api_key' in st.session_state:
-            api_key = st.session_state['gemini_api_key']
+    api_key = st.session_state.get('gemini_api_key')
     if api_key:
         try:
             genai.configure(api_key=api_key)
@@ -22,7 +19,7 @@ def show_optimizer_page():
     st.markdown("<p style='font-size: 16px; color: #94a3b8;'>Formulate optimized daily teenage schedules balancing digital time, academics, fitness, and restorative sleep.</p>", unsafe_allow_html=True)
 
     # API key check
-    if not os.environ.get("GEMINI_API_KEY") and 'gemini_api_key' not in st.session_state:
+    if 'gemini_api_key' not in st.session_state:
         st.warning("⚠️ Google AI Studio API Key is required to execute Generative Schedule Optimizations. Please enter your API Key in the Gemini Psychology Copilot tab.")
         return
 
